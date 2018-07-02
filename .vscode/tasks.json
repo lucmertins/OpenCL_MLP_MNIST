@@ -27,5 +27,13 @@
                 "$go"
             ]
         }
+        {
+            "label": "runTestOp",
+            "type": "shell",
+            "command": "cd bin; ./testeOperacional",
+            "problemMatcher": [
+                "$go"
+            ]
+        }
     ]
 }
