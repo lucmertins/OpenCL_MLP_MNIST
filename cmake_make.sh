@@ -8,6 +8,7 @@ then
       cd ./build/; make clean; cd - 1>/dev/null
     fi
     rm -rf build/
+    rm -rf bin/
   else
     echo "Command not found"
     exit 1

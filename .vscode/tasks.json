@@ -26,11 +26,19 @@
             "problemMatcher": [
                 "$go"
             ]
-        }
+        },
         {
             "label": "runTestOp",
             "type": "shell",
             "command": "cd bin; ./testeOperacional",
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
+            "label": "runTestBumblebee",
+            "type": "shell",
+            "command": "cd bin; optirun ./testeOperacional",
             "problemMatcher": [
                 "$go"
             ]

@@ -14,6 +14,16 @@
 
 #include "apiopencl.h"
 
+#define CL_CHECK(_expr)                                                             \
+    do                                                                              \
+    {                                                                               \
+        cl_int _err = _expr;                                                        \
+        if (_err == CL_SUCCESS)                                                     \
+            break;                                                                  \
+        std::cout << "OpenCL Error: " << #_expr << "returned " << (int)_err << "!"; \
+        abort();                                                                    \
+    } while (0)
+
 ///
 //  Create an OpenCL context on the first available platform using
 //  either a GPU or CPU depending on what is available.
@@ -22,13 +32,13 @@ cl_context CreateContext()
 {
     cl_int errNum;
     cl_uint numPlatforms;
-    cl_platform_id firstPlatformId;
+    cl_platform_id allPlatformId[20];
     cl_context context = NULL;
 
     // First, select an OpenCL platform to run on.  For this example, we
     // simply choose the first available platform.  Normally, you would
     // query for all available platforms and select the most appropriate one.
-    errNum = clGetPlatformIDs(1, &firstPlatformId, &numPlatforms);
+    errNum = clGetPlatformIDs(20, allPlatformId, &numPlatforms);
     if (errNum != CL_SUCCESS || numPlatforms <= 0)
     {
         std::cerr << "Failed to find any OpenCL platforms." << std::endl;
@@ -36,13 +46,61 @@ cl_context CreateContext()
     }
     else
     {
-        std::cout << "Num Plataform [" << numPlatforms << "]";
+        std::cout << "Num Plataform [" << numPlatforms << "]" << std::endl;
+        for (int i = 0; i < numPlatforms; i++)
+        {
+            char buffer[10240];
+            std::cout << i << std::endl;
+            clGetPlatformInfo(allPlatformId[i], CL_PLATFORM_PROFILE, 10240, buffer, NULL);
+            std::cout << "  PROFILE =" << buffer << std::endl;
+            clGetPlatformInfo(allPlatformId[i], CL_PLATFORM_VERSION, 10240, buffer, NULL);
+            std::cout << "  VERSION =" << buffer << std::endl;
+            clGetPlatformInfo(allPlatformId[i], CL_PLATFORM_NAME, 10240, buffer, NULL);
+            std::cout << "  NAME =" << buffer << std::endl;
+            clGetPlatformInfo(allPlatformId[i], CL_PLATFORM_VENDOR, 10240, buffer, NULL);
+            std::cout << "  VENDOR =" << buffer << std::endl;
+            clGetPlatformInfo(allPlatformId[i], CL_PLATFORM_EXTENSIONS, 10240, buffer, NULL);
+            std::cout << "  EXTENSIONS =" << buffer << std::endl;
+        }
     }
 
+    cl_device_id devices[20];
+    cl_uint devices_n = 0;
+    errNum = clGetDeviceIDs(allPlatformId[2], CL_DEVICE_TYPE_GPU, 20, devices, &devices_n);
+    if (errNum != CL_SUCCESS || devices_n <= 0)
+    {
+        std::cout << "Err [" << errNum << "] Failed to find any OpenCL device" << std::endl;
+        return NULL;
+    }
+    else
+    {
+        for (int i = 0; i < devices_n; i++)
+        {
+            char buffer[10240];
+            cl_uint buf_uint;
+            cl_ulong buf_ulong;
+            std::cout << i << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_NAME, sizeof(buffer), buffer, NULL);
+            std::cout << "  DEVICE_NAME =" << buffer << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_VENDOR, sizeof(buffer), buffer, NULL);
+            std::cout << "  DEVICE_VENDOR =" << buffer << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_VERSION, sizeof(buffer), buffer, NULL);
+            std::cout << "  DEVICE_VERSION =" << buffer << std::endl;
+            clGetDeviceInfo(devices[i], CL_DRIVER_VERSION, sizeof(buffer), buffer, NULL);
+            std::cout << "  DRIVER_VERSION =" << buffer << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(buf_uint), &buf_uint, NULL);
+            std::cout << "  DEVICE_MAX_COMPUTE_UNITS =" << buf_uint << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_MAX_CLOCK_FREQUENCY, sizeof(buf_uint), &buf_uint, NULL);
+            std::cout << "  DEVICE_MAX_CLOCK_FREQUENCY =" << buf_uint << std::endl;
+            clGetDeviceInfo(devices[i], CL_DEVICE_GLOBAL_MEM_SIZE, sizeof(buf_ulong), &buf_ulong, NULL);
+            std::cout << "  DEVICE_GLOBAL_MEM_SIZE =" << buf_ulong << std::endl;
+        }
+    }
+    std::cout << "vamo" << std::endl;
     // Next, create an OpenCL context on the platform.  Attempt to
     // create a GPU-based context, and if that fails, try to create
     // a CPU-based context.
-    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)firstPlatformId, 0};
+    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)allPlatformId, 0};
     context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_GPU, NULL, NULL, &errNum);
     if (errNum != CL_SUCCESS)
     {
@@ -95,7 +153,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
     // In this example, we just choose the first available device.  In a
     // real program, you would likely use all available devices or choose
     // the highest performance device based on OpenCL device queries
-    commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
+    commandQueue = clCreateCommandQueueWithProperties(context, devices[0], 0, NULL);
     if (commandQueue == NULL)
     {
         delete[] devices;
