@@ -100,7 +100,7 @@ cl_context CreateContext()
     // Next, create an OpenCL context on the platform.  Attempt to
     // create a GPU-based context, and if that fails, try to create
     // a CPU-based context.
-    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)allPlatformId, 0};
+    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)allPlatformId[2], 0};
     context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_GPU, NULL, NULL, &errNum);
     if (errNum != CL_SUCCESS)
     {
