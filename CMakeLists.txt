@@ -34,7 +34,3 @@ add_executable (mlp ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR
 target_link_libraries (mlp OpenCL::OpenCL)
 
 configure_file(src/mlp.cl ${PROJECT_SOURCE_DIR}/bin/mlp.cl COPYONLY)
-
-
-execute_process(COMMAND ${PROJECT_SOURCE_DIR}/bin/mlp args
-                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
