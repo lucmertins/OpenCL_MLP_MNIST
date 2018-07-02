@@ -34,30 +34,26 @@ cl_context CreateContext()
         std::cerr << "Failed to find any OpenCL platforms." << std::endl;
         return NULL;
     }
+    else
+    {
+        std::cout << "Num Plataform [" << numPlatforms << "]";
+    }
 
     // Next, create an OpenCL context on the platform.  Attempt to
     // create a GPU-based context, and if that fails, try to create
     // a CPU-based context.
-    cl_context_properties contextProperties[] =
-    {
-        CL_CONTEXT_PLATFORM,
-        (cl_context_properties)firstPlatformId,
-        0
-    };
-    context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_GPU,
-                                      NULL, NULL, &errNum);
+    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)firstPlatformId, 0};
+    context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_GPU, NULL, NULL, &errNum);
     if (errNum != CL_SUCCESS)
     {
-        std::cout << "Could not create GPU context, trying CPU..." << std::endl;
-        context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_CPU,
-                                          NULL, NULL, &errNum);
+        std::cout << "Err [" << errNum << "] Could not create GPU context, trying CPU..." << std::endl;
+        context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_CPU, NULL, NULL, &errNum);
         if (errNum != CL_SUCCESS)
         {
-            std::cerr << "Failed to create an OpenCL GPU or CPU context." << std::endl;
+            std::cerr << "Err [" << errNum << "] Failed to create an OpenCL GPU or CPU context." << std::endl;
             return NULL;
         }
     }
-
     return context;
 }
 
@@ -91,7 +87,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
     errNum = clGetContextInfo(context, CL_CONTEXT_DEVICES, deviceBufferSize, devices, NULL);
     if (errNum != CL_SUCCESS)
     {
-        delete [] devices;
+        delete[] devices;
         std::cerr << "Failed to get device IDs";
         return NULL;
     }
@@ -102,20 +98,20 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
     commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
     if (commandQueue == NULL)
     {
-        delete [] devices;
+        delete[] devices;
         std::cerr << "Failed to create commandQueue for device 0";
         return NULL;
     }
 
     *device = devices[0];
-    delete [] devices;
+    delete[] devices;
     return commandQueue;
 }
 
 ///
 //  Create an OpenCL program from the kernel source file
 //
-cl_program CreateProgram(cl_context context, cl_device_id device, const char* fileName)
+cl_program CreateProgram(cl_context context, cl_device_id device, const char *fileName)
 {
     cl_int errNum;
     cl_program program;
@@ -133,7 +129,7 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
     std::string srcStdStr = oss.str();
     const char *srcStr = srcStdStr.c_str();
     program = clCreateProgramWithSource(context, 1,
-                                        (const char**)&srcStr,
+                                        (const char **)&srcStr,
                                         NULL, NULL);
     if (program == NULL)
     {
@@ -163,7 +159,7 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
 //  The kernel takes three arguments: result (output), a (input),
 //  and b (input)
 //
-bool CreateMemObjects(cl_context context, cl_mem memObjects[3],float *a, float *b)
+bool CreateMemObjects(cl_context context, cl_mem memObjects[3], float *a, float *b)
 {
     memObjects[0] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                    sizeof(float) * ARRAY_SIZE, a, NULL);
@@ -184,7 +180,7 @@ bool CreateMemObjects(cl_context context, cl_mem memObjects[3],float *a, float *
 ///
 //  Cleanup any created OpenCL resources
 //
-void Cleanup(cl_context context, cl_command_queue commandQueue,cl_program program, cl_kernel kernel, cl_mem memObjects[3])
+void Cleanup(cl_context context, cl_command_queue commandQueue, cl_program program, cl_kernel kernel, cl_mem memObjects[3])
 {
     for (int i = 0; i < 3; i++)
     {
@@ -202,6 +198,4 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,cl_program progra
 
     if (context != 0)
         clReleaseContext(context);
-
 }
-
