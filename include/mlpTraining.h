@@ -11,4 +11,7 @@ const string training_label_fn = "mnist/train-labels.idx1-ubyte";
 // Number of training samples
 const int nTraining = 60000;
 
+// Report file name
+const string report_fn = "training-report.dat";
+
 void aboutTraining();
