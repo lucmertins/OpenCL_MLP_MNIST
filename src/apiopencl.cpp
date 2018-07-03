@@ -66,7 +66,7 @@ cl_context CreateContext()
 
     cl_device_id devices[20];
     cl_uint devices_n = 0;
-    errNum = clGetDeviceIDs(allPlatformId[2], CL_DEVICE_TYPE_GPU, 20, devices, &devices_n);
+    errNum = clGetDeviceIDs(allPlatformId[PLATAFORM_SELECT], CL_DEVICE_TYPE_GPU, 20, devices, &devices_n);
     if (errNum != CL_SUCCESS || devices_n <= 0)
     {
         std::cout << "Err [" << errNum << "] Failed to find any OpenCL device" << std::endl;
@@ -96,11 +96,10 @@ cl_context CreateContext()
             std::cout << "  DEVICE_GLOBAL_MEM_SIZE =" << buf_ulong << std::endl;
         }
     }
-    std::cout << "vamo" << std::endl;
     // Next, create an OpenCL context on the platform.  Attempt to
     // create a GPU-based context, and if that fails, try to create
     // a CPU-based context.
-    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)allPlatformId[2], 0};
+    cl_context_properties contextProperties[] = {CL_CONTEXT_PLATFORM, (cl_context_properties)allPlatformId[PLATAFORM_SELECT], 0};
     context = clCreateContextFromType(contextProperties, CL_DEVICE_TYPE_GPU, NULL, NULL, &errNum);
     if (errNum != CL_SUCCESS)
     {
