@@ -1,7 +1,9 @@
 ///
 //  Constants
 //
-const int PLATAFORM_SELECT = 2;
+// 0 pc casa 
+// 2 notebook com bumblebee
+const int PLATAFORM_SELECT = 0;    
 const int ARRAY_SIZE = 1000;
 
 cl_context CreateContext();
