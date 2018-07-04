@@ -1,13 +1,12 @@
-///
-//  Constants
-//
-// 0 pc casa 
-// 2 notebook com bumblebee
-const int PLATAFORM_SELECT = 0;    
-const int ARRAY_SIZE = 1000;
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
-cl_context CreateContext();
-cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device);
-cl_program CreateProgram(cl_context context, cl_device_id device, const char *fileName);
-bool CreateMemObjects(cl_context context, cl_mem memObjects[3], float *a, float *b);
-void Cleanup(cl_context context, cl_command_queue commandQueue, cl_program program, cl_kernel kernel, cl_mem memObjects[3]);
+void showPlataforms();
+void showDevices(int plataformSelect);
+cl_context createContext(int plataformSelect);
+cl_command_queue createCommandQueue(cl_context context, cl_device_id *device);
+cl_program createProgram(cl_context context, cl_device_id device, const char *fileName);
+void cleanup(cl_context context, cl_command_queue commandQueue, cl_program program, cl_kernel kernel, cl_mem memObjects[3]);

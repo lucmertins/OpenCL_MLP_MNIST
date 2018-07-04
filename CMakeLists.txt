@@ -29,7 +29,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
-add_executable (mlp ${PROJECT_SOURCE_DIR}/src/mlpTraining.cpp ${PROJECT_SOURCE_DIR}/src/mlp.cpp)
+add_executable (mlp ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/mlpTraining.cpp ${PROJECT_SOURCE_DIR}/src/mlp.cpp)
 
 add_executable (testeOkOpenCL ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/testeOkOpenCL.cpp)
 
