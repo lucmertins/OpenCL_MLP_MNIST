@@ -51,15 +51,16 @@ int main(int argc, char **argv)
     cl_kernel kernel = 0;
     cl_mem memObjects[3] = {0, 0, 0};
     cl_int errNum;
-
-    //showPlataforms();
-    showDevices(0);
+    
+    int plataformId=2;
+    showPlataforms();
+    showDevices(plataformId);
     // As the result of the above function
     // 0 pc casa
     // 2 notebook com bumblebee
     std::cout << "****************" << std::endl;
 
-    context = createContext(0);
+    context = createContext(plataformId);
     if (context == NULL)
     {
         std::cerr << "Failed to create OpenCL context." << std::endl;

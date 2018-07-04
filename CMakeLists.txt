@@ -38,3 +38,4 @@ target_link_libraries (mlp OpenCL::OpenCL)
 target_link_libraries (testeOkOpenCL OpenCL::OpenCL)
 
 configure_file(src/testeOkOpenCL.cl ${PROJECT_SOURCE_DIR}/bin/testeOkOpenCL.cl COPYONLY)
+configure_file(src/mlp.cl ${PROJECT_SOURCE_DIR}/bin/mlp.cl COPYONLY)

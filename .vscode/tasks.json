@@ -28,6 +28,14 @@
             ]
         },
         {
+            "label": "runBumblebee",
+            "type": "shell",
+            "command": "cd bin; optirun ./mlp",
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
             "label": "runTesteOkOpenCL",
             "type": "shell",
             "command": "cd bin; ./testeOkOpenCL",

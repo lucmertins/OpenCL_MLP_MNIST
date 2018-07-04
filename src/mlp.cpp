@@ -49,6 +49,7 @@ double *w1[n1 + 1], *delta1[n1 + 1], *out1;
 
 // hidden layer
 double *w2[n2 + 1], *delta2[n2 + 1], *in2, *out2, *theta2;
+cl_mem *clIn2;
 
 // Output layer
 double *in3, *out3, *theta3;
@@ -117,28 +118,26 @@ void showDate()
     report << "Tempo:  " << result << endl;
 }
 
-void initOpenCL(cl_device_id *device)
+void initOpenCL(int plataformId, cl_device_id *device)
 {
-    //showPlataforms();
-    // As the result of the above function
-    // 0 pc casa
-    // 2 notebook com bumblebee
-    context = createContext(0);
+    context = createContext(plataformId);
     if (context == NULL)
     {
-        std::cerr << "Failed to create OpenCL context." << std::endl;
+        cout << "Failed to create OpenCL context." << endl;
         exit(-1);
     }
     commandQueue = createCommandQueue(context, device);
     if (commandQueue == NULL)
     {
-        //   Cleanup(context, commandQueue, program, kernel, memObjects);
+        cout << "Failed to create Queue." << endl;
+        cleanup(context, commandQueue, program, kernel, memObjects);
         exit(-1);
     }
 
     program = createProgram(context, *device, "testeOkOpenCL.cl");
     if (program == NULL)
     {
+        cout << "Failed to create Program." << endl;
         cleanup(context, commandQueue, program, kernel, memObjects);
         exit(-1);
     }
@@ -146,29 +145,10 @@ void initOpenCL(cl_device_id *device)
     kernel = clCreateKernel(program, "hello_kernel", NULL);
     if (kernel == NULL)
     {
-        std::cerr << "Failed to create kernel" << std::endl;
+        cout << "Failed to create kernel" << endl;
         cleanup(context, commandQueue, program, kernel, memObjects);
         exit(-1);
     }
-}
-
-bool createMemObjects(cl_context context, int size, cl_mem memObjects[3], float *a, float *b)
-{
-
-    memObjects[0] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                   sizeof(float) * size, a, NULL);
-    memObjects[1] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-                                   sizeof(float) * size, b, NULL);
-    memObjects[2] = clCreateBuffer(context, CL_MEM_READ_WRITE,
-                                   sizeof(float) * size, NULL, NULL);
-
-    if (memObjects[0] == NULL || memObjects[1] == NULL || memObjects[2] == NULL)
-    {
-        std::cerr << "Error creating memory objects." << std::endl;
-        return false;
-    }
-
-    return true;
 }
 
 int main(int argc, char *argv[])
@@ -180,60 +160,43 @@ int main(int argc, char *argv[])
     float a[ARRAY_SIZE];
     float b[ARRAY_SIZE];
     cl_int errNum;
+     
 
-    initOpenCL(&device);
-    for (int i = 0; i < ARRAY_SIZE; i++)
-    {
-        a[i] = (float)i;
-        b[i] = (float)(i * 2);
-    }
-    if (!createMemObjects(context, ARRAY_SIZE, memObjects, a, b))
+    //showPlataforms();
+    // As the result of the above function
+    // 0 pc casa
+    // 2 notebook com bumblebee
+    int plataformId = 2;
+
+    initOpenCL(plataformId, &device);
+
+    in2 = new double[n2 + 1];
+    cout << "Buffer creating." << endl;
+    *clIn2 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(double) * (n2 + 1), in2, &errNum);
+
+    cout << "Program creating." << endl;
+    program = createProgram(context, device, "mlp.cl");
+    if (program == NULL)
     {
         cleanup(context, commandQueue, program, kernel, memObjects);
+        clReleaseMemObject(*clIn2);
         return 1;
     }
 
-    // Set the kernel arguments (result, a, b)
-    errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), &memObjects[0]);
-    errNum |= clSetKernelArg(kernel, 1, sizeof(cl_mem), &memObjects[1]);
-    errNum |= clSetKernelArg(kernel, 2, sizeof(cl_mem), &memObjects[2]);
-    if (errNum != CL_SUCCESS)
-    {
-        std::cerr << "Error setting kernel arguments." << std::endl;
-        cleanup(context, commandQueue, program, kernel, memObjects);
-        return 1;
-    }
-    size_t globalWorkSize[1] = {(size_t)ARRAY_SIZE};
-    size_t localWorkSize[1] = {1};
+    // errNum = clSetKernelArg(kernel, 0, sizeof(cl_mem), clIn2);
+    // size_t globalWorkSize[1] = {n2+1};
+    // size_t localWorkSize[1] = {1};
 
-    // Queue the kernel up for execution across the array
-    errNum = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL,
-                                    globalWorkSize, localWorkSize,
-                                    0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
-        std::cerr << "Error queuing kernel for execution." << std::endl;
-        cleanup(context, commandQueue, program, kernel, memObjects);
-        return 1;
-    }
+    // errNum = clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
+    // if (errNum != CL_SUCCESS)
+    // {
+    //     std::cerr << "Error queuing kernel for execution." << std::endl;
+    //     cleanup(context, commandQueue, program, kernel, memObjects);
+    //     clReleaseMemObject(*clIn2);
+    //     return 1;
+    // }
 
-    // Read the output buffer back to the Host
-    errNum = clEnqueueReadBuffer(commandQueue, memObjects[2], CL_TRUE,
-                                 0, ARRAY_SIZE * sizeof(float), result,
-                                 0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
-        std::cerr << "Error reading result buffer." << std::endl;
-        cleanup(context, commandQueue, program, kernel, memObjects);
-        return 1;
-    }
-    // Output the result buffer
-    for (int i = 0; i < ARRAY_SIZE; i++)
-    {
-        std::cout << result[i] << " ";
-    }
-    std::cout << std::endl;
-    std::cout << "Executed program succesfully." << std::endl;
+    cout << "Executed program succesfully." << endl;
     // aboutTraining();
     // report.open(report_fn.c_str(), ios::out);
     // image.open(training_image_fn.c_str(), ios::in | ios::binary); // Binary image file
