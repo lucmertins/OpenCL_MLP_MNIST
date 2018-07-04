@@ -57,7 +57,7 @@ double sigmoid(double x) {
     return 1.0 / (1.0 + exp(-x));
 }
 
-void perceptron() {
+void processPerceptron() {
     for (int i = 1; i <= n2; ++i) {
 		in2[i] = 0.0;
 	}
@@ -111,12 +111,12 @@ int main(int argc, char *argv[])
     {
         label.read(&number, sizeof(char));
     }
-    init_mlpTraining();
+    initLayersRoundWeight();
 
     showDate();
 
     training();
-    write_matrix(model_fn);
+    saveMLP(model_fn);
 
     showDate();
     report.close();

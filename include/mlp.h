@@ -30,7 +30,7 @@ extern double *in3, *out3,*theta3;
 
 double sigmoid(double x);
 
-void perceptron();
+void processPerceptron();
 
 
 

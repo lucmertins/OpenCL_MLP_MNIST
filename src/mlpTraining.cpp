@@ -32,7 +32,7 @@ void aboutTraining()
          << endl;
 }
 
-void init_mlpTraining()
+void initLayersRoundWeight()
 {
     // Layer 1 - Layer 2 = Input layer - Hidden layer
     for (int i = 1; i <= n1; ++i)
@@ -62,20 +62,16 @@ void init_mlpTraining()
     for (int i = 1; i <= n1; ++i) {
         for (int j = 1; j <= n2; ++j) {
             int sign = rand() % 2;
-            // Another strategy to randomize the weights - quite good 
-            // w1[i][j] = (double)(rand() % 10 + 1) / (10 * n2);
             w1[i][j] = (double)(rand() % 6) / 10.0;
             if (sign == 1) {
 				w1[i][j] = - w1[i][j];
 			}
         }
 	}
-    	// Initialization for weights from Hidden layer to Output layer
+    // Initialization for weights from Hidden layer to Output layer
     for (int i = 1; i <= n2; ++i) {
         for (int j = 1; j <= n3; ++j) {
             int sign = rand() % 2;
-			// Another strategy to randomize the weights - quite good 
-            // w2[i][j] = (double)(rand() % 6) / 10.0;
             w2[i][j] = (double)(rand() % 10 + 1) / (10.0 * n3);
             if (sign == 1) {
 				w2[i][j] = - w2[i][j];
@@ -84,9 +80,8 @@ void init_mlpTraining()
 	}
 }
 
-void write_matrix(string file_name) {
+void saveMLP(string file_name) {
     ofstream file(file_name.c_str(), ios::out);
-	
 	// Input layer - Hidden layer
     for (int i = 1; i <= n1; ++i) {
         for (int j = 1; j <= n2; ++j) {
@@ -94,7 +89,6 @@ void write_matrix(string file_name) {
 		}
 		file << endl;
     }
-	
 	// Hidden layer - Output layer
     for (int i = 1; i <= n2; ++i) {
         for (int j = 1; j <= n3; ++j) {
@@ -102,11 +96,10 @@ void write_matrix(string file_name) {
 		}
         file << endl;
     }
-	
 	file.close();
 }
 
-double square_error(){
+double squareError(){
     double res = 0.0;
     for (int i = 1; i <= n3; ++i) {
         res += (out3[i] - expected[i]) * (out3[i] - expected[i]);
@@ -115,7 +108,7 @@ double square_error(){
     return res;
 }
 
-void back_propagation() {
+void backPropagation() {
     double sum;
 
     for (int i = 1; i <= n3; ++i) {
@@ -145,23 +138,21 @@ void back_propagation() {
 	}
 }
 
-int learning_process() {
+int learning() {
     for (int i = 1; i <= n1; ++i) {
         for (int j = 1; j <= n2; ++j) {
 			delta1[i][j] = 0.0;
 		}
 	}
-
     for (int i = 1; i <= n2; ++i) {
         for (int j = 1; j <= n3; ++j) {
 			delta2[i][j] = 0.0;
 		}
 	}
-
     for (int i = 1; i <= epochs; ++i) {
-        perceptron();
-        back_propagation();
-        if (square_error() < epsilon) {
+        processPerceptron();
+        backPropagation();
+        if (squareError() < epsilon) {
 			return i;
 		}
     }
@@ -216,17 +207,11 @@ void training(){
         input();
 		
 		// Learning process: Perceptron (Forward procedure) - Back propagation
-        int nIterations = learning_process();
+        int nIterations = learning();
 
 		// Write down the squared error
 		cout << "No. iterations: " << nIterations << endl;
-        printf("Error: %0.6lf\n\n", square_error());
-        report << "Sample " << sample << ": No. iterations = " << nIterations << ", Error = " << square_error() << endl;
-		
-		// Save the current network (weights)
-		if (sample % 100 == 0) {
-			cout << "Saving the network to " << model_fn << " file." << endl;
-			write_matrix(model_fn);
-		}
+        printf("Error: %0.6lf\n\n", squareError());
+        report << "Sample " << sample << ": No. iterations = " << nIterations << ", Error = " << squareError() << endl;
     }
 }

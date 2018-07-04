@@ -23,6 +23,6 @@ extern ofstream report;
 
 
 void aboutTraining();
-void init_mlpTraining();
+void initLayersRoundWeight();
 void training();
-void write_matrix(string file_name);
+void saveMLP(string file_name);
