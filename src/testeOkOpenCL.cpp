@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     }
 
     // Create OpenCL program from HelloWorld.cl kernel source
-    program = CreateProgram(context, device, "mlp.cl");
+    program = CreateProgram(context, device, "testeOkOpenCL.cl");
     if (program == NULL)
     {
         Cleanup(context, commandQueue, program, kernel, memObjects);

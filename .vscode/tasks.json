@@ -28,17 +28,17 @@
             ]
         },
         {
-            "label": "runTestOp",
+            "label": "runTesteOkOpenCL",
             "type": "shell",
-            "command": "cd bin; ./testeOperacional",
+            "command": "cd bin; ./testeOkOpenCL",
             "problemMatcher": [
                 "$go"
             ]
         },
         {
-            "label": "runTestBumblebee",
+            "label": "runTesteOkOpenCLBumblebee",
             "type": "shell",
-            "command": "cd bin; optirun ./testeOperacional",
+            "command": "cd bin; optirun ./testeOkOpenCL",
             "problemMatcher": [
                 "$go"
             ]

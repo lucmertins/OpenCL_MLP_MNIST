@@ -31,10 +31,10 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 add_executable (mlp ${PROJECT_SOURCE_DIR}/src/mlpTraining.cpp ${PROJECT_SOURCE_DIR}/src/mlp.cpp)
 
-add_executable (testeOperacional ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/testeOperacional.cpp)
+add_executable (testeOkOpenCL ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/testeOkOpenCL.cpp)
 
 target_link_libraries (mlp OpenCL::OpenCL)
 
-target_link_libraries (testeOperacional OpenCL::OpenCL)
+target_link_libraries (testeOkOpenCL OpenCL::OpenCL)
 
-configure_file(src/mlp.cl ${PROJECT_SOURCE_DIR}/bin/mlp.cl COPYONLY)
+configure_file(src/testeOkOpenCL.cl ${PROJECT_SOURCE_DIR}/bin/testeOkOpenCL.cl COPYONLY)
