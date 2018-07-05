@@ -1,10 +1,13 @@
 
-__kernel void clearN1l(__global const float *n1)
+__kernel void clearN2(__global double *n2)
 {
-    int base = 4*get_global_id(0);
-    n1[base++]=0;
-    n1[base++]=0;
-    n1[base++]=0;
-    n1[base++]=0;
+    int base = get_global_id(0);
+    n2[base]=0;
 
+}
+
+__kernel void incrementN2(__global double *n2)
+{
+    int base =get_global_id(0);
+    n2[base]+=1;
 }

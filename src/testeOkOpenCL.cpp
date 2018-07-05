@@ -53,8 +53,8 @@ int main(int argc, char **argv)
     cl_int errNum;
     
     int plataformId=2;
-    showPlataforms();
-    showDevices(plataformId);
+    // showPlataforms();
+    // showDevices(plataformId);
     // As the result of the above function
     // 0 pc casa
     // 2 notebook com bumblebee
