@@ -225,13 +225,7 @@ int main(int argc, char *argv[])
     initOpenCL(plataformId, &device);
 
     in2 = new double[n2 + 1];
-    for (int i = 0; i < n2 + 1; i++)
-    {
-        cout << in2[i] << " ";
-    }
-    cout << endl
-         << endl
-         << "Buffer creating." << endl;
+    cout << "Buffer creating." << endl;
 
     clIn2 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(double) * (n2 + 1), in2, &errNum);
 
@@ -246,15 +240,14 @@ int main(int argc, char *argv[])
     // Read the output buffer back to the Host
     avalError(context, 7, clEnqueueReadBuffer(commandQueue, clIn2, CL_TRUE, 0, (n2 + 1) * sizeof(double), in2, 0, NULL, NULL));
 
-    cout << endl
-         << endl;
-    // Output the result buffer
+    cout << "Result" << endl;
     for (int i = 0; i < n2 + 1; i++)
     {
         cout << in2[i] << " ";
     }
     cout << endl
          << "Executed program succesfully." << endl;
+
     // aboutTraining();
     // report.open(report_fn.c_str(), ios::out);
     // image.open(training_image_fn.c_str(), ios::in | ios::binary); // Binary image file
