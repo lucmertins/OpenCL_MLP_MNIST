@@ -77,12 +77,10 @@ void processPerceptron()
     {
         in2[i] = 0.0;
     }
-
     for (int i = 1; i <= n3; ++i)
     {
         in3[i] = 0.0;
     }
-
     for (int i = 1; i <= n1; ++i)
     {
         for (int j = 1; j <= n2; ++j)
@@ -90,12 +88,10 @@ void processPerceptron()
             in2[j] += out1[i] * w1[i][j];
         }
     }
-
     for (int i = 1; i <= n2; ++i)
     {
         out2[i] = sigmoid(in2[i]);
     }
-
     for (int i = 1; i <= n2; ++i)
     {
         for (int j = 1; j <= n3; ++j)
@@ -103,7 +99,6 @@ void processPerceptron()
             in3[j] += out2[i] * w2[i][j];
         }
     }
-
     for (int i = 1; i <= n3; ++i)
     {
         out3[i] = sigmoid(in3[i]);
@@ -118,48 +113,101 @@ void showDate()
     report << "Tempo:  " << result << endl;
 }
 
+void avalError(void *instance, int pos, cl_int errNum)
+{
+    if (instance == NULL || errNum != CL_SUCCESS)
+    {
+        switch (pos)
+        {
+        case 1:
+            cout << "Failed to create OpenCL context." << endl;
+            exit(pos);
+        case 2:
+            cout << "Failed to create Queue." << endl;
+            clReleaseContext(context);
+            exit(pos);
+        case 3:
+            cout << "Failed to create Program." << endl;
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 4:
+            cout << "Failed to create kernel" << endl;
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 44:
+            cout << "Failed to create kernel" << endl;
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 5:
+            cout << "Error setting kernel arguments [" << errNum << "]" << endl;
+            clReleaseMemObject(clIn2);
+            clReleaseKernel(kernelIncrementN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 6:
+            cout << "Error queuing kernel for execution. Errnum [" << errNum << "]" << endl;
+            clReleaseMemObject(clIn2);
+            clReleaseKernel(kernelIncrementN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 55:
+            cout << "Error setting kernel arguments [" << errNum << "]" << endl;
+            clReleaseMemObject(clIn2);
+            clReleaseKernel(kernelIncrementN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        case 66:
+            cout << "Error queuing kernel for execution. Errnum [" << errNum << "]" << endl;
+            clReleaseMemObject(clIn2);
+            clReleaseKernel(kernelIncrementN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+
+        case 7:
+            cout << "Error reading result buffer. Errnum [" << errNum << "]" << endl;
+            clReleaseMemObject(clIn2);
+            clReleaseKernel(kernelIncrementN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseKernel(kernelClearN2);
+            clReleaseProgram(program);
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        }
+    }
+}
+
 void initOpenCL(int plataformId, cl_device_id *device)
 {
     context = createContext(plataformId);
-    if (context == NULL)
-    {
-        cout << "Failed to create OpenCL context." << endl;
-        exit(1);
-    }
+    avalError(context, 1, CL_SUCCESS);
     commandQueue = createCommandQueue(context, device);
-    if (commandQueue == NULL)
-    {
-        cout << "Failed to create Queue." << endl;
-        clReleaseContext(context);
-        exit(2);
-    }
+    avalError(commandQueue, 2, CL_SUCCESS);
     program = createProgram(context, *device, "mlp.cl");
-    if (program == NULL)
-    {
-        cout << "Failed to create Program." << endl;
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        exit(3);
-    }
-    // Create OpenCL kernel
+    avalError(program, 3, CL_SUCCESS);
     kernelClearN2 = clCreateKernel(program, "clearN2", NULL);
-    if (kernelClearN2 == NULL)
-    {
-        cout << "Failed to create kernel" << endl;
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        exit(4);
-    }
+    avalError(kernelClearN2, 4, CL_SUCCESS);
     kernelIncrementN2 = clCreateKernel(program, "incrementN2", NULL);
-    if (kernelIncrementN2 == NULL)
-    {
-        cout << "Failed to create kernel" << endl;
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        exit(44);
-    }
+    avalError(kernelIncrementN2, 44, CL_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -172,68 +220,34 @@ int main(int argc, char *argv[])
     // As the result of the above function
     // 0 pc casa
     // 2 notebook com bumblebee
-    int plataformId = 2;
+    int plataformId = 0;
 
     initOpenCL(plataformId, &device);
 
     in2 = new double[n2 + 1];
-    cout << "Buffer creating." << endl;
+    for (int i = 0; i < n2 + 1; i++)
+    {
+        cout << in2[i] << " ";
+    }
+    cout << endl
+         << endl
+         << "Buffer creating." << endl;
+
     clIn2 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(double) * (n2 + 1), in2, &errNum);
 
     size_t globalWorkSize[1] = {n2 + 1};
     size_t localWorkSize[1] = {1};
-    errNum = clSetKernelArg(kernelClearN2, 0, sizeof(cl_mem), &clIn2);
-    if (errNum != CL_SUCCESS)
-    {
-        cout << "Error setting kernel arguments [" << errNum << "]" << endl;
-        clReleaseKernel(kernelClearN2);
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        return 5;
-    }
-    errNum = clEnqueueNDRangeKernel(commandQueue, kernelClearN2, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
-        cout << "Error queuing kernel for execution. Errnum [" << errNum << "]" << endl;
-        clReleaseMemObject(clIn2);
-        clReleaseKernel(kernelClearN2);
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        return 6;
-    }
-    errNum = clSetKernelArg(kernelIncrementN2, 0, sizeof(cl_mem), &clIn2);
-    if (errNum != CL_SUCCESS)
-    {
-        cout << "Error setting kernel arguments [" << errNum << "]" << endl;
-        clReleaseKernel(kernelClearN2);
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        return 55;
-    }
-    errNum = clEnqueueNDRangeKernel(commandQueue, kernelIncrementN2, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
-        cout << "Error queuing kernel for execution. Errnum [" << errNum << "]" << endl;
-        clReleaseMemObject(clIn2);
-        clReleaseKernel(kernelClearN2);
-        clReleaseProgram(program);
-        clReleaseCommandQueue(commandQueue);
-        clReleaseContext(context);
-        return 66;
-    }
+    avalError(context, 5, clSetKernelArg(kernelClearN2, 0, sizeof(cl_mem), &clIn2));
+    avalError(context, 6, clEnqueueNDRangeKernel(commandQueue, kernelClearN2, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
+
+    avalError(context, 55, clSetKernelArg(kernelIncrementN2, 0, sizeof(cl_mem), &clIn2));
+    avalError(context, 66, clEnqueueNDRangeKernel(commandQueue, kernelIncrementN2, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
 
     // Read the output buffer back to the Host
-    errNum = clEnqueueReadBuffer(commandQueue, clIn2, CL_TRUE, 0, n2 + 1 * sizeof(double), in2, 0, NULL, NULL);
-    if (errNum != CL_SUCCESS)
-    {
-        std::cerr << "Error reading result buffer." << std::endl;
-        cleanup(context, commandQueue, program, kernelClearN2, memObjects);
-        return 1;
-    }
+    avalError(context, 7, clEnqueueReadBuffer(commandQueue, clIn2, CL_TRUE, 0, (n2 + 1) * sizeof(double), in2, 0, NULL, NULL));
 
+    cout << endl
+         << endl;
     // Output the result buffer
     for (int i = 0; i < n2 + 1; i++)
     {
