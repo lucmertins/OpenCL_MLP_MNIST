@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
     // As the result of the above function
     // 0 pc casa
     // 2 notebook com bumblebee
-    int plataformId = 2;
+    int plataformId = 0;
 
     initOpenCL(plataformId, &device);
 

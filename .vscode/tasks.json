@@ -52,6 +52,14 @@
             ]
         },
         {
+            "label": "runTesteMatrizes",
+            "type": "shell",
+            "command": "cd bin; ./testeMatrizes",
+            "problemMatcher": [
+                "$go"
+            ]
+        },
+        {
             "label": "runTesteMatrizesBumblebee",
             "type": "shell",
             "command": "cd bin; optirun ./testeMatrizes",

@@ -118,6 +118,9 @@ void avalError(void *instance, int pos, cl_int errNum)
             clReleaseCommandQueue(commandQueue);
             clReleaseContext(context);
             exit(pos);
+        default:
+            cout << "Error unknown. Pos [" << pos << "]. Errnum [" << errNum << "]" << endl;
+            exit(pos);
         }
     }
 }
@@ -148,7 +151,7 @@ int main(int argc, char *argv[])
     // As the result of the above function
     // 0 pc casa
     // 2 notebook com bumblebee
-    int plataformId = 2;
+    int plataformId = 0;
 
     initOpenCL(plataformId, &device);
 
@@ -158,7 +161,7 @@ int main(int argc, char *argv[])
 
     clIn2 = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(double) * tam, in2, &errNum);
 
-    size_t globalWorkSize[1] = {tam};
+    size_t globalWorkSize[1] = {(size_t)tam};
     size_t localWorkSize[1] = {1};
     avalError(context, 5, clSetKernelArg(kernelClearN2, 0, sizeof(cl_mem), &clIn2));
     avalError(context, 6, clEnqueueNDRangeKernel(commandQueue, kernelClearN2, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
@@ -169,31 +172,53 @@ int main(int argc, char *argv[])
     // Read the output buffer back to the Host
     avalError(context, 7, clEnqueueReadBuffer(commandQueue, clIn2, CL_TRUE, 0, tam * sizeof(double), in2, 0, NULL, NULL));
 
-    cout << "Result" << endl;
-    for (int i = 0; i < tam; i++)
-    {
-        cout << in2[i] << " ";
-    }
-    cout << endl
-         << "Executed program succesfully." << endl;
+    // cout << "Result" << endl;
+    // for (int i = 0; i < tam; i++)
+    // {
+    //     cout << in2[i] << " ";
+    // }
+    // cout << endl
+    //      << endl
+    //      << endl
+    //      << endl;
 
     clReleaseMemObject(clIn2);
     clReleaseKernel(kernelIncrementN2);
     clReleaseKernel(kernelClearN2);
 
-    int width = 6000, height = 2000;
-    int array[width][height];
-    int *ptr_to_array_data = array[0];
+    int width = 10, height = 10;
 
-    globalWorkSize[1] = {width * height};
-    localWorkSize[1] = {width};
-
-    cl_mem device_array = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, width * height * sizeof(int), ptr_to_array_data, NULL);
+    globalWorkSize[0] = (size_t)(width);
+    localWorkSize[0] = (size_t)(height);
+    cl_mem device_array = clCreateBuffer(context, CL_MEM_READ_WRITE, width * height * sizeof(int), NULL, NULL);
     avalError(context, 555, clSetKernelArg(kernelMatriz2D, 0, sizeof(cl_mem), &device_array));
     avalError(context, 555, clSetKernelArg(kernelMatriz2D, 1, sizeof(cl_int), &width));
     avalError(context, 555, clSetKernelArg(kernelMatriz2D, 2, sizeof(cl_int), &height));
     avalError(context, 666, clEnqueueNDRangeKernel(commandQueue, kernelMatriz2D, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
 
+    cout << endl
+         << "Mostrar matriz 2d" << endl;
+
+    int *ptr_to_array_data = (int *)malloc(sizeof(int) * width * height);
+    avalError(context, 777, clEnqueueReadBuffer(commandQueue, device_array, CL_TRUE, 0, width * height * sizeof(int), ptr_to_array_data, 0, NULL, NULL));
+    for (int h = 0; h < height; h++)
+    {
+        for (int w = 0; w < width; w++)
+
+        {
+            cout << *(ptr_to_array_data + (w + h * width)) << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+
+    cout << *ptr_to_array_data << " ";
+    cout << *(ptr_to_array_data + 5) << " ";
+
+    cout << "Fim" << endl;
+    free(ptr_to_array_data);
+    clReleaseMemObject(device_array);
+    clReleaseKernel(kernelMatriz2D);
     clReleaseProgram(program);
     clReleaseCommandQueue(commandQueue);
     clReleaseContext(context);
