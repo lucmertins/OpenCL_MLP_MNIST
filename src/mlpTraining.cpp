@@ -4,21 +4,20 @@
 #include <cstdlib>
 #include <cmath>
 
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
+
 #include "mlpTraining.h"
+#include "apiopencl.h"
 
 using namespace std;
 
 // Image size in MNIST database
 const int width = 28;
 const int height = 28;
-
-// n1 = Number of input neurons
-// n2 = Number of hidden neurons
-// n3 = Number of output neurons
-// epochs = Number of iterations for back-propagation algorithm
-// learning_rate = Learing rate
-// momentum = Momentum (heuristics to optimize back-propagation algorithm)
-// epsilon = Epsilon, no more iterations if the learning error is smaller than epsilon
 
 const int n1 = width * height; // = 784
 const int n2 = 128;            // hidden layer
@@ -31,16 +30,24 @@ const double epsilon = 1e-3;
 // MLP Definition
 // input layer
 double *w1[n1 + 1], *delta1[n1 + 1], *out1;
+cl_mem deviceW1, deviceDelta1, deviceOut1;
 
 // hidden layer
 double *w2[n2 + 1], *delta2[n2 + 1], *in2, *out2, *theta2;
+cl_mem deviceW2, deviceDelta2, deviceIn2, deviceOut2, deviceTheta2;
 
 // Output layer
 double *in3, *out3, *theta3;
+cl_mem deviceIn3, deviceOut3, deviceTheta3;
 
 double expected[n3 + 1];
 // Numero de exemplos
 const int nTraining = 60000;
+
+cl_context context = 0;
+cl_command_queue commandQueue = 0;
+cl_program program = 0;
+//cl_kernel kernelClearN2 = 0, kernelIncrementN2 = 0;
 
 void aboutTraining()
 {
@@ -101,58 +108,91 @@ void processPerceptron()
     }
 }
 
+void clearBuffers()
+{
+    clReleaseMemObject(deviceW1);
+    clReleaseMemObject(deviceDelta1);
+    clReleaseMemObject(deviceOut1);
+    clReleaseMemObject(deviceW2);
+    clReleaseMemObject(deviceDelta2);
+    clReleaseMemObject(deviceIn2);
+    clReleaseMemObject(deviceOut2);
+    clReleaseMemObject(deviceTheta2);
+    clReleaseMemObject(deviceIn3);
+    clReleaseMemObject(deviceOut3);
+    clReleaseMemObject(deviceTheta3);
+}
+
 void initLayersRoundWeight()
 {
+    // size_t globalWorkSize[1] = {(size_t)((n1 + 1) * (n2 + 1))};
+    // size_t localWorkSize[1] = {1};
+
+    // Initialization for weights Input Layer
+    double *w1Temp = (double *)malloc((n1 + 1) * (n2 + 1) * sizeof(double));
+    for (int x1 = 1; x1 <= n1; x1++)
+    {
+        for (int x2 = 1; x2 <= n2; x2++)
+        {
+            int sign = rand() % 2;
+            *(w1Temp + (x1 * n2 + x2)) = (double)(rand() % 6) / 10.0;
+            if (sign == 1)
+            {
+                *(w1Temp + (x1 * n2 + x2)) = -*(w1Temp + (x1 * n2 + x2));
+            }
+        }
+    }
+
     // Layer 1 - Layer 2 = Input layer - Hidden layer
-    for (int i = 1; i <= n1; ++i)
+    cl_mem deviceW1 = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, (n1 + 1) * (n2 + 1) * sizeof(double), w1Temp, NULL);
+    cl_mem deviceDelta1 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n1 + 1) * (n2 + 1) * sizeof(double), NULL, NULL);
+    free(w1Temp);
+
+    cl_mem deviceOut1 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n1 + 1) * sizeof(double), NULL, NULL);
+    // out1 = new double[n1 + 1];
+
+    // Initialization for weights Input Layer
+    double *w2Temp = (double *)malloc((n2 + 1) * (n3 + 1) * sizeof(double));
+    for (int x2 = 1; x2 <= n2; x2++)
     {
-        w1[i] = new double[n2 + 1];
-        delta1[i] = new double[n2 + 1];
+        for (int x3 = 1; x3 <= n3; x3++)
+        {
+            int sign = rand() % 2;
+            *(w2Temp + (x2 * n3 + x3)) = (double)(rand() % 6) / 10.0;
+            if (sign == 1)
+            {
+                *(w2Temp + (x2 * n3 + x3)) = -*(w2Temp + (x2 * n3 + x3));
+            }
+        }
     }
-
-    out1 = new double[n1 + 1];
-
     // Layer 2 - Layer 3 = Hidden layer - Output layer
-    for (int i = 1; i <= n2; ++i)
-    {
-        w2[i] = new double[n3 + 1];
-        delta2[i] = new double[n3 + 1];
-    }
+    cl_mem deviceW2 = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, (n2 + 1) * (n3 + 1) * sizeof(double), w2Temp, NULL);
+    cl_mem deviceDelta2 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n2 + 1) * (n3 + 1) * sizeof(double), NULL, NULL);
+    free(w2Temp);
 
-    in2 = new double[n2 + 1];
-    out2 = new double[n2 + 1];
-    theta2 = new double[n2 + 1];
+    cl_mem deviceIn2 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n2 + 1) * sizeof(double), NULL, NULL);
+    cl_mem deviceOut2 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n2 + 1) * sizeof(double), NULL, NULL);
+    cl_mem deviceTheta2 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n2 + 1) * sizeof(double), NULL, NULL);
 
     // Layer 3 - Output layer
-    in3 = new double[n3 + 1];
-    out3 = new double[n3 + 1];
-    theta3 = new double[n3 + 1];
-    // Initialization for weights from Input layer to Hidden layer
-    for (int i = 1; i <= n1; ++i)
-    {
-        for (int j = 1; j <= n2; ++j)
-        {
-            int sign = rand() % 2;
-            w1[i][j] = (double)(rand() % 6) / 10.0;
-            if (sign == 1)
-            {
-                w1[i][j] = -w1[i][j];
-            }
-        }
-    }
-    // Initialization for weights from Hidden layer to Output layer
-    for (int i = 1; i <= n2; ++i)
-    {
-        for (int j = 1; j <= n3; ++j)
-        {
-            int sign = rand() % 2;
-            w2[i][j] = (double)(rand() % 10 + 1) / (10.0 * n3);
-            if (sign == 1)
-            {
-                w2[i][j] = -w2[i][j];
-            }
-        }
-    }
+    cl_mem deviceIn3 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n3 + 1) * sizeof(double), NULL, NULL);
+    cl_mem deviceOut3 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n3 + 1) * sizeof(double), NULL, NULL);
+    cl_mem deviceTheta3 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n3 + 1) * sizeof(double), NULL, NULL);
+
+    // double *w1Temp2 = (double *)malloc((n2 + 1) * (n3 + 1) * sizeof(double));
+    // clEnqueueReadBuffer(commandQueue, deviceW2, CL_TRUE, 0, (n2 + 1) * (n3 + 1) * sizeof(double), w1Temp2, 0, NULL, NULL);
+
+    // cout << "**************2 " << endl;
+    // for (int x1 = 1; x1 <= n2; x1++)
+    // {
+    //     for (int x2 = 1; x2 <= n3; x2++)
+    //     {
+    //         cout << *(w1Temp2 + (x1 * n3 + x2)) << " ";
+    //     }
+    //     cout << endl;
+    // }
+    // cout << endl;
+    // free(w1Temp2);
 }
 
 void saveMLP(string file_name)
@@ -259,6 +299,7 @@ void input()
 {
     // Reading image
     char number;
+// mudar para uso com ponteiros.
 
     int d[width + 1][height + 1];
     for (int j = 1; j <= height; ++j)
@@ -285,14 +326,16 @@ void input()
 		cout << endl;
 	}
 */
-    for (int j = 1; j <= height; ++j)
-    {
-        for (int i = 1; i <= width; ++i)
-        {
-            int pos = i + (j - 1) * width;
-            out1[pos] = d[i][j];
-        }
-    }
+
+// copiar dados para deviceOut1
+    // for (int j = 1; j <= height; ++j)
+    // {
+    //     for (int i = 1; i <= width; ++i)
+    //     {
+    //         int pos = i + (j - 1) * width;
+    //         out1[pos] = d[i][j];
+    //     }
+    // }
 
     // Reading label
     label.read(&number, sizeof(char));
@@ -314,12 +357,54 @@ void training()
         // Getting (image, label)
         input();
 
-        // Learning process: Perceptron (Forward procedure) - Back propagation
-        int nIterations = learning();
+        // // Learning process: Perceptron (Forward procedure) - Back propagation
+        // int nIterations = learning();
 
-        // Write down the squared error
-        cout << "No. iterations: " << nIterations << endl;
-        printf("Error: %0.6lf\n\n", squareError());
-        report << "Sample " << sample << ": No. iterations = " << nIterations << ", Error = " << squareError() << endl;
+        // // Write down the squared error
+        // cout << "No. iterations: " << nIterations << endl;
+        // printf("Error: %0.6lf\n\n", squareError());
+        // report << "Sample " << sample << ": No. iterations = " << nIterations << ", Error = " << squareError() << endl;
     }
+}
+
+void avalError(void *instance, int pos, cl_int errNum)
+{
+    if (instance == NULL || errNum != CL_SUCCESS)
+    {
+        switch (pos)
+        {
+        case 1:
+            cout << "Failed to create OpenCL context." << endl;
+            exit(pos);
+        case 2:
+            cout << "Failed to create Queue." << endl;
+            clReleaseContext(context);
+            exit(pos);
+        case 3:
+            cout << "Failed to create Program." << endl;
+            clReleaseCommandQueue(commandQueue);
+            clReleaseContext(context);
+            exit(pos);
+        default:
+            cout << "Error unknown. Pos [" << pos << "]. Errnum [" << errNum << "]" << endl;
+            exit(pos);
+        }
+    }
+}
+
+void initOpenCL(int plataformId, cl_device_id *device)
+{
+    context = createContext(plataformId);
+    avalError(context, 1, CL_SUCCESS);
+    commandQueue = createCommandQueue(context, device);
+    avalError(commandQueue, 2, CL_SUCCESS);
+    program = createProgram(context, *device, "mlp.cl");
+    avalError(program, 3, CL_SUCCESS);
+}
+
+void cleanOpenCL()
+{
+    clReleaseProgram(program);
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
 }

@@ -9,7 +9,11 @@
             "command": "./cmake_make.sh",
             "problemMatcher": [
                 "$go"
-            ]
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "clean",
