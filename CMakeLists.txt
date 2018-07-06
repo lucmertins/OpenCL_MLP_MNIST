@@ -33,9 +33,15 @@ add_executable (mlp ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR
 
 add_executable (testeOkOpenCL ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/testeOkOpenCL.cpp)
 
+add_executable (testeMatrizes ${PROJECT_SOURCE_DIR}/src/apiopencl.cpp ${PROJECT_SOURCE_DIR}/src/testeMatrizes.cpp)
+
+
 target_link_libraries (mlp OpenCL::OpenCL)
 
 target_link_libraries (testeOkOpenCL OpenCL::OpenCL)
 
+target_link_libraries (testeMatrizes OpenCL::OpenCL)
+
 configure_file(src/testeOkOpenCL.cl ${PROJECT_SOURCE_DIR}/bin/testeOkOpenCL.cl COPYONLY)
 configure_file(src/mlp.cl ${PROJECT_SOURCE_DIR}/bin/mlp.cl COPYONLY)
+configure_file(src/testeMatrizes.cl ${PROJECT_SOURCE_DIR}/bin/testeMatrizes.cl COPYONLY)
