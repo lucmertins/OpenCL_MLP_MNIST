@@ -67,13 +67,13 @@ int main(int argc, char *argv[])
 
 
     training();
-    // saveMLP(model_fn);
+    saveMLP(model_fn);
 
     showDate();
 
     cleanBuffers();
 
-    // report.close();
-    // image.close();
-    // label.close();
+    report.close();
+    image.close();
+    label.close();
 }
