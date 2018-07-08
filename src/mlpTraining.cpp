@@ -30,24 +30,27 @@ const double epsilon = 1e-3;
 // MLP Definition
 // input layer
 double *w1[n1 + 1], *delta1[n1 + 1], *out1;
-cl_mem deviceW1, deviceDelta1, deviceOut1;
+cl_mem deviceW1 = 0, deviceDelta1 = 0, deviceOut1 = 0;
 
 // hidden layer
 double *w2[n2 + 1], *delta2[n2 + 1], *in2, *out2, *theta2;
-cl_mem deviceW2, deviceDelta2, deviceIn2, deviceOut2, deviceTheta2;
+cl_mem deviceW2 = 0, deviceDelta2 = 0, deviceIn2 = 0, deviceOut2 = 0, deviceTheta2 = 0;
 
 // Output layer
 double *in3, *out3, *theta3;
-cl_mem deviceIn3, deviceOut3, deviceTheta3;
+cl_mem deviceIn3 = 0, deviceOut3 = 0, deviceTheta3 = 0;
 
 double expected[n3 + 1];
+cl_mem deviceExpected = 0;
 // Numero de exemplos
 const int nTraining = 60000;
 
 cl_context context = 0;
 cl_command_queue commandQueue = 0;
 cl_program program = 0;
-//cl_kernel kernelClearN2 = 0, kernelIncrementN2 = 0;
+cl_kernel kernelClearVector = 0;
+
+cl_device_id *deviceGlobal;
 
 void aboutTraining()
 {
@@ -108,21 +111,6 @@ void processPerceptron()
     }
 }
 
-void clearBuffers()
-{
-    clReleaseMemObject(deviceW1);
-    clReleaseMemObject(deviceDelta1);
-    clReleaseMemObject(deviceOut1);
-    clReleaseMemObject(deviceW2);
-    clReleaseMemObject(deviceDelta2);
-    clReleaseMemObject(deviceIn2);
-    clReleaseMemObject(deviceOut2);
-    clReleaseMemObject(deviceTheta2);
-    clReleaseMemObject(deviceIn3);
-    clReleaseMemObject(deviceOut3);
-    clReleaseMemObject(deviceTheta3);
-}
-
 void initLayersRoundWeight()
 {
     // size_t globalWorkSize[1] = {(size_t)((n1 + 1) * (n2 + 1))};
@@ -148,7 +136,7 @@ void initLayersRoundWeight()
     cl_mem deviceDelta1 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n1 + 1) * (n2 + 1) * sizeof(double), NULL, NULL);
     free(w1Temp);
 
-    cl_mem deviceOut1 = clCreateBuffer(context, CL_MEM_READ_WRITE, (n1 + 1) * sizeof(double), NULL, NULL);
+    // deviceOut1 foi criado na função Input
     // out1 = new double[n1 + 1];
 
     // Initialization for weights Input Layer
@@ -270,87 +258,120 @@ void backPropagation()
 
 int learning()
 {
-    for (int i = 1; i <= n1; ++i)
-    {
-        for (int j = 1; j <= n2; ++j)
-        {
-            delta1[i][j] = 0.0;
-        }
-    }
-    for (int i = 1; i <= n2; ++i)
-    {
-        for (int j = 1; j <= n3; ++j)
-        {
-            delta2[i][j] = 0.0;
-        }
-    }
-    for (int i = 1; i <= epochs; ++i)
-    {
-        processPerceptron();
-        backPropagation();
-        if (squareError() < epsilon)
-        {
-            return i;
-        }
-    }
+    // zerar deviceDelta1
+    size_t globalWorkSize[1] = {10};
+    size_t localWorkSize[1] = {1};
+    avalError(context, 5, clSetKernelArg(kernelClearVector, 0, sizeof(cl_mem), &deviceDelta1));
+    initCommandQueue();
+    avalError(context, 6, clEnqueueNDRangeKernel(commandQueue, kernelClearVector, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
+    cout<<"learning "<<endl;
+    avalError(context, 7, clFinish(commandQueue));
+    double *temp = (double *)malloc((n1 + 1) * (n2 + 1) * sizeof(double));
+    avalError(context, 100, clEnqueueReadBuffer(commandQueue, deviceDelta1, CL_TRUE, 0, (n1) * (n2) * sizeof(double), temp, 0, NULL, NULL));
+
+    // cout << endl
+    //      << "Buffer clean" << endl;
+    // for (int x = 0; x < (n1 + 1) * (n2 + 1); x++)
+    // {
+    //     if (*(temp + x) != 0.0)
+    //     {
+    //         cout << x << "     " << *(temp + x) << endl;
+    //     }
+    // }
+    // cout << endl;
+    // free(temp);
+
+    // for (int i = 1; i <= n2; ++i)
+    // {
+    //     for (int j = 1; j <= n3; ++j)
+    //     {
+    //         delta2[i][j] = 0.0;
+    //     }
+    // }
+    // for (int i = 1; i <= epochs; ++i)
+    // {
+    //     processPerceptron();
+    //     backPropagation();
+    //     if (squareError() < epsilon)
+    //     {
+    //         return i;
+    //     }
+    // }
     return epochs;
 }
 void input()
 {
     // Reading image
     char number;
-// mudar para uso com ponteiros.
+    // mudar para uso com ponteiros.
 
-    int d[width + 1][height + 1];
-    for (int j = 1; j <= height; ++j)
+    double *img = (double *)malloc((width * height) * sizeof(double));
+    for (int h = 0; h < height; h++)
     {
-        for (int i = 1; i <= width; ++i)
+        for (int w = 0; w < width; w++)
         {
             image.read(&number, sizeof(char));
             if (number == 0)
             {
-                d[i][j] = 0;
+                *(img + (h * width + w)) = 0;
             }
             else
             {
-                d[i][j] = 1;
+                *(img + (h * width + w)) = 1;
             }
         }
     }
-    /*	
-	cout << "Image:" << endl;
-	for (int j = 1; j <= height; ++j) {
-		for (int i = 1; i <= width; ++i) {
-			cout << d[i][j];
-		}
-		cout << endl;
-	}
-*/
-
-// copiar dados para deviceOut1
-    // for (int j = 1; j <= height; ++j)
+    // cout << "Image Ponteiro:" << endl;
+    // for (int h = 0; h < height; h++)
     // {
-    //     for (int i = 1; i <= width; ++i)
+    //     for (int w = 0; w < width; w++)
     //     {
-    //         int pos = i + (j - 1) * width;
-    //         out1[pos] = d[i][j];
+    //         cout << *(img + (h * width + w));
     //     }
+    //     cout << endl;
     // }
+    if (deviceOut1 != 0)
+    {
+        clReleaseMemObject(deviceOut1);
+    }
+    deviceOut1 = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, (n1 + 1) * sizeof(double), img, NULL);
+    free(img);
+    // double *imgTemp = (double *)malloc(width * height * sizeof(double));
+    // clEnqueueReadBuffer(commandQueue, deviceOut1, CL_TRUE, 0, (n1 + 1) * sizeof(double), imgTemp, 0, NULL, NULL);
+
+    // cout << "Imagem Buffer read" << endl;
+    // for (int h = 0; h < height; h++)
+    // {
+    //     for (int w = 0; w < width; w++)
+    //     {
+    //         cout << *(imgTemp + (h * width + w));
+    //     }
+    //     cout << endl;
+    // }
+    // cout << endl;
+    // free(imgTemp);
 
     // Reading label
     label.read(&number, sizeof(char));
-    for (int i = 1; i <= n3; ++i)
-    {
-        expected[i] = 0.0;
-    }
-    expected[number + 1] = 1.0;
 
+    double *expectedTemp = (double *)malloc((n3 + 1) * sizeof(double));
+    for (int i = 1; i <= n3; i++)
+    {
+        *(expectedTemp + i) = 0;
+    }
+    *(expectedTemp + number + 1) = 1.0;
+    if (deviceExpected != 0)
+    {
+        clReleaseMemObject(deviceExpected);
+    }
+    deviceExpected = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, (n3 + 1) * sizeof(double), expectedTemp, NULL);
+    free(expectedTemp);
     cout << "Label: " << (int)(number) << endl;
 }
 
 void training()
 {
-    for (int sample = 1; sample <= nTraining; ++sample)
+    for (int sample = 1; sample <= 2; ++sample)
     {
         cout << "Sample " << sample << endl;
 
@@ -358,7 +379,7 @@ void training()
         input();
 
         // // Learning process: Perceptron (Forward procedure) - Back propagation
-        // int nIterations = learning();
+        int nIterations = learning();
 
         // // Write down the squared error
         // cout << "No. iterations: " << nIterations << endl;
@@ -382,8 +403,25 @@ void avalError(void *instance, int pos, cl_int errNum)
             exit(pos);
         case 3:
             cout << "Failed to create Program." << endl;
-            clReleaseCommandQueue(commandQueue);
             clReleaseContext(context);
+            exit(pos);
+        case 4:
+            cout << "initKernel() - Failed to create kernelClearVector!" << endl;
+            cleanKernels();
+            cleanBuffers();
+            cleanOpenCL();
+            exit(pos);
+        case 5:
+            cout << "Error setting kernel arguments [" << errNum << "]" << endl;
+            cleanKernels();
+            cleanBuffers();
+            cleanOpenCL();
+            exit(pos);
+        case 6:
+            cout << "Error queuing kernel for execution. Errnum [" << errNum << "]" << endl;
+            cleanKernels();
+            cleanBuffers();
+            cleanOpenCL();
             exit(pos);
         default:
             cout << "Error unknown. Pos [" << pos << "]. Errnum [" << errNum << "]" << endl;
@@ -396,15 +434,66 @@ void initOpenCL(int plataformId, cl_device_id *device)
 {
     context = createContext(plataformId);
     avalError(context, 1, CL_SUCCESS);
-    commandQueue = createCommandQueue(context, device);
-    avalError(commandQueue, 2, CL_SUCCESS);
     program = createProgram(context, *device, "mlp.cl");
     avalError(program, 3, CL_SUCCESS);
+    deviceGlobal = device;
+}
+void initCommandQueue()
+{
+    if (commandQueue != 0)
+    {
+        cout<<"Liberando commandQueue"<<endl;
+        clReleaseCommandQueue(commandQueue);
+    }
+    cout << "Device Global " << *deviceGlobal << endl;
+    commandQueue = createCommandQueue(context, deviceGlobal);
+    avalError(commandQueue, 2, CL_SUCCESS);
 }
 
+void initKernels()
+{
+    kernelClearVector = clCreateKernel(program, "clearVector", NULL);
+    avalError(kernelClearVector, 4, CL_SUCCESS);
+}
 void cleanOpenCL()
 {
     clReleaseProgram(program);
-    clReleaseCommandQueue(commandQueue);
+    if (commandQueue != 0)
+    {
+        clReleaseCommandQueue(commandQueue);
+    }
     clReleaseContext(context);
+}
+void cleanBuffers()
+{
+    if (deviceW1 != 0)
+        clReleaseMemObject(deviceW1);
+    if (deviceDelta1 != 0)
+        clReleaseMemObject(deviceDelta1);
+    if (deviceOut1 != 0)
+        clReleaseMemObject(deviceOut1);
+    if (deviceW2 != 0)
+        clReleaseMemObject(deviceW2);
+    if (deviceDelta2 != 0)
+        clReleaseMemObject(deviceDelta2);
+    if (deviceIn2 != 0)
+        clReleaseMemObject(deviceIn2);
+    if (deviceOut2 != 0)
+        clReleaseMemObject(deviceOut2);
+    if (deviceTheta2 != 0)
+        clReleaseMemObject(deviceTheta2);
+    if (deviceIn3 != 0)
+        clReleaseMemObject(deviceIn3);
+    if (deviceOut3 != 0)
+        clReleaseMemObject(deviceOut3);
+    if (deviceTheta3 != 0)
+        clReleaseMemObject(deviceTheta3);
+    if (deviceExpected != 0)
+        clReleaseMemObject(deviceExpected);
+}
+
+void cleanKernels()
+{
+    if (kernelClearVector != 0)
+        clReleaseKernel(kernelClearVector);
 }

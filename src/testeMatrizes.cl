@@ -6,6 +6,12 @@ __kernel void clearN2(__global double *n2)
 
 }
 
+__kernel void param(__global double *n2,const double value)
+{
+    int base = get_global_id(0);
+    n2[base]=value;
+
+}
 __kernel void incrementN2(__global double *n2)
 {
     int base =get_global_id(0);

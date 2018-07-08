@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
     int plataformId = 0;
 
     initOpenCL(plataformId, &device);
+    initKernels();
 
     aboutTraining();
     report.open(report_fn.c_str(), ios::out);
@@ -64,12 +65,14 @@ int main(int argc, char *argv[])
     initLayersRoundWeight();
     showDate();
 
-    clearBuffers();
 
     training();
     // saveMLP(model_fn);
 
     showDate();
+
+    cleanBuffers();
+
     // report.close();
     // image.close();
     // label.close();

@@ -29,5 +29,11 @@ void training();
 void saveMLP(string file_name);
 
 void initOpenCL(int plataformId, cl_device_id *device);
-void clearBuffers();
+void initKernels();
+void initCommandQueue();
+void cleanBuffers();
+void cleanKernels();
 void cleanOpenCL();
+
+
+void avalError(void *instance, int pos, cl_int errNum);

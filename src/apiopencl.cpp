@@ -172,18 +172,18 @@ cl_command_queue createCommandQueue(cl_context context, cl_device_id *device)
     if (errNum != CL_SUCCESS)
     {
         delete[] devices;
-        std::cerr << "Failed to get device IDs";
+        std::cerr << "Failed to get device IDs " << std::endl;
         return NULL;
     }
 
     // In this example, we just choose the first available device.  In a
     // real program, you would likely use all available devices or choose
     // the highest performance device based on OpenCL device queries
-    commandQueue = clCreateCommandQueueWithProperties(context, devices[0], 0, NULL);
+    commandQueue = clCreateCommandQueueWithProperties(context, devices[0], 0, &errNum);
     if (commandQueue == NULL)
     {
         delete[] devices;
-        std::cerr << "Failed to create commandQueue for device 0";
+        std::cerr << "Failed to create commandQueue for device 0 [" << errNum << "]" << std::endl;
         return NULL;
     }
 
