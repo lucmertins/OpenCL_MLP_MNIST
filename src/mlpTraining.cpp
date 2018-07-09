@@ -48,6 +48,7 @@ cl_program program = 0;
 cl_kernel kernelClearVector = 0;
 cl_kernel kernelSumVector = 0;
 cl_kernel kernelSigmoid = 0;
+cl_kernel kernelMultiMatrix = 0;
 
 cl_device_id *deviceGlobal;
 
@@ -401,7 +402,7 @@ void input()
 
 void training()
 {
-    for (int sample = 1; sample <= nTraining; ++sample)
+    for (int sample = 1; sample <= 2; ++sample)
     {
         cout << "Sample " << sample << endl;
         // Getting (image, label)
@@ -483,9 +484,11 @@ void initKernels()
     kernelClearVector = clCreateKernel(program, "clearVector", NULL);
     avalError(kernelClearVector, 400, CL_SUCCESS);
     kernelSumVector = clCreateKernel(program, "sumVector", NULL);
-    avalError(kernelClearVector, 401, CL_SUCCESS);
+    avalError(kernelSumVector, 401, CL_SUCCESS);
     kernelSigmoid = clCreateKernel(program, "sigmoid", NULL);
     avalError(kernelSigmoid, 402, CL_SUCCESS);
+    kernelMultiMatrix = clCreateKernel(program, "Vector", NULL);
+    avalError(kernelMultiMatrix, 402, CL_SUCCESS);
 }
 
 void cleanOpenCL()
@@ -521,4 +524,6 @@ void cleanKernels()
         clReleaseKernel(kernelSumVector);
     if (kernelSigmoid != 0)
         clReleaseKernel(kernelSigmoid);
+    if (kernelMultiMatrix != 0)
+        clReleaseKernel(kernelMultiMatrix);
 }
