@@ -113,7 +113,7 @@ void processPerceptron()
         avalError(context, 26, clSetKernelArg(kernelSumVector, 4, sizeof(cl_int), &limit));
         avalError(context, 27, clEnqueueNDRangeKernel(commandQueue, kernelSumVector, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
     }
-//exit(40);
+    //exit(40);
     // int tamanho = (n2 + 1);
     // double *ptr_to_array_data = (double *)malloc(tamanho * sizeof(double));
     // avalError(context, 777, clEnqueueReadBuffer(commandQueue, deviceIn2, CL_TRUE, 0, tamanho * sizeof(double), ptr_to_array_data, 0, NULL, NULL));
@@ -353,10 +353,11 @@ int learning()
 }
 void input()
 {
-    // Reading image
     char number;
-    // mudar para uso com ponteiros.
-    free(pOut1);
+    if (pOut1 == 0)
+    {
+        free(pOut1);
+    }
     pOut1 = (double *)malloc((n1 + 1) * sizeof(double));
     *pOut1 = 0;
     for (int h = 1; h <= height; h++)
@@ -374,20 +375,21 @@ void input()
             }
         }
     }
-    cout << "Image Ponteiro:" << endl;
-    for (int h = 0; h < height; h++)
-    {
-        for (int w = 1; w <= width; w++)
-        {
-            cout << *(pOut1 + (h * width + w));
-        }
-        cout << endl;
-    }
+    // cout << "Image Ponteiro:" << endl;
+    // for (int h = 0; h < height; h++)
+    // {
+    //     for (int w = 1; w <= width; w++)
+    //     {
+    //         cout << *(pOut1 + (h * width + w));
+    //     }
+    //     cout << endl;
+    // }
 
-    //    Reading label
     label.read(&number, sizeof(char));
-
-    free(pExpected);
+    if (pExpected == 0)
+    {
+        free(pExpected);
+    }
     pExpected = (double *)malloc((n3 + 1) * sizeof(double));
     for (int i = 1; i <= n3; i++)
     {
