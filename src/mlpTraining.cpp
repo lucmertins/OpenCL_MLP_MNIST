@@ -48,6 +48,7 @@ cl_program program = 0;
 cl_kernel kernelClearVector = 0;
 cl_kernel kernelSumVector = 0;
 cl_kernel kernelSigmoid = 0;
+cl_kernel kernelMultiMatrix = 0;
 
 cl_device_id *deviceGlobal;
 
@@ -113,7 +114,7 @@ void processPerceptron()
         avalError(context, 26, clSetKernelArg(kernelSumVector, 4, sizeof(cl_int), &limit));
         avalError(context, 27, clEnqueueNDRangeKernel(commandQueue, kernelSumVector, 1, NULL, globalWorkSize, localWorkSize, 0, NULL, NULL));
     }
-//exit(40);
+    //exit(40);
     // int tamanho = (n2 + 1);
     // double *ptr_to_array_data = (double *)malloc(tamanho * sizeof(double));
     // avalError(context, 777, clEnqueueReadBuffer(commandQueue, deviceIn2, CL_TRUE, 0, tamanho * sizeof(double), ptr_to_array_data, 0, NULL, NULL));
@@ -399,7 +400,7 @@ void input()
 
 void training()
 {
-    for (int sample = 1; sample <= nTraining; ++sample)
+    for (int sample = 1; sample <= 2; ++sample)
     {
         cout << "Sample " << sample << endl;
         // Getting (image, label)
@@ -481,9 +482,11 @@ void initKernels()
     kernelClearVector = clCreateKernel(program, "clearVector", NULL);
     avalError(kernelClearVector, 400, CL_SUCCESS);
     kernelSumVector = clCreateKernel(program, "sumVector", NULL);
-    avalError(kernelClearVector, 401, CL_SUCCESS);
+    avalError(kernelSumVector, 401, CL_SUCCESS);
     kernelSigmoid = clCreateKernel(program, "sigmoid", NULL);
     avalError(kernelSigmoid, 402, CL_SUCCESS);
+    kernelMultiMatrix = clCreateKernel(program, "Vector", NULL);
+    avalError(kernelMultiMatrix, 402, CL_SUCCESS);
 }
 
 void cleanOpenCL()
@@ -519,4 +522,6 @@ void cleanKernels()
         clReleaseKernel(kernelSumVector);
     if (kernelSigmoid != 0)
         clReleaseKernel(kernelSigmoid);
+    if (kernelMultiMatrix != 0)
+        clReleaseKernel(kernelMultiMatrix);
 }
