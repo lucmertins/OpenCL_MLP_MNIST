@@ -1,5 +1,5 @@
 
-__kernel void sigmoid(__global double *out, __global double *in) 
+__kernel void sigmoid(__global double *out, __global double *in)
 {
     int i = get_global_id(0);
     out[i]=1.0 / (1.0 + exp(-in[i]));
@@ -11,9 +11,9 @@ __kernel void clearVector(__global double *v)
     v[gid]=0;
 }
 
-__kernel void sumVector(__global double *in, __global double *out, __global double *w, const int i, const int n) 
+__kernel void sumVector(__global double *in, __global double *out, __global double *w, const int i, const int n)
 {
-    int j = get_global_id(0);
+    int j = get_global_id(0);  //128
 //    if (j!=0) {
     in[j] += out[i] * *(w + i*n + j);
     //if (j==1){
@@ -22,21 +22,35 @@ __kernel void sumVector(__global double *in, __global double *out, __global doub
 //    }
 }
 
-__kernel void multiMatrix(__global float* resultVector,    __global float* matrixA,    __global float* vectorB,     int width_A)
+__kernel void multiMatrix(__global double *in, __global double *out, __global double *w, const int n1, const int n2)
 {
-    int tx = get_global_id(0);
-
-    float value = 0;
-    for (unsigned int k = 0; k < width_A; ++k) {
-        value += matrixA[tx * width_A + k] * vectorB[k];
+    int j = get_global_id(0); //129
+    if (j!=0){
+        double result=0;
+        for (int i = 1; i <= n1; i++) 
+        {
+            result += *(out+i) * *(w + i *n2 + j);
+            // if (j==53){
+            //     printf("[%f %f]",*(out+i),*(w + j * limit + i));
+            // }
+        }
+        in[j]=1.0 / (1.0 + exp(-result));
     }
-    resultVector[tx] = value;
 }
 
-__kernel void sigmoid(__global double *out, __global double *in) {
-    int i = get_global_id(0);
-//    if (i!=0) {
-    out[i]=1.0 / (1.0 + exp(-in[i]));
-//    }
+__kernel void multiMatrix2(__global double *in, __global double *out, __global double *w, const int n1, const int n2)
+{
+    int j = get_global_id(0); //129
+    if (j!=0){
+        double result=0;
+        for (int i = 1; i <= n1; i++) 
+        {
+            result += *(out+i) * *(w + i *n2 + j);
+            // if (j==53){
+            //     printf("[%f %f]",*(out+i),*(w + j * limit + i));
+            // }
+        }
+        in[j]=result;
+    }
 }
 

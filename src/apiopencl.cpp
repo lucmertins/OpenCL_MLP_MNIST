@@ -226,7 +226,7 @@ cl_program createProgram(cl_context context, cl_device_id device, const char *fi
         char buildLog[16384];
         clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, sizeof(buildLog), buildLog, NULL);
 
-        std::cerr << "Error in kernel: " << std::endl;
+        std::cerr << "Error in kernel [ " << errNum << "]:" << std::endl;
         std::cerr << buildLog;
         clReleaseProgram(program);
         return NULL;
