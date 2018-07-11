@@ -321,7 +321,7 @@ void input()
     // }
 
     label.read(&number, sizeof(char));
-    if (pExpected == 0)
+    if (pExpected != 0)
     {
         free(pExpected);
     }
