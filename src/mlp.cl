@@ -37,20 +37,3 @@ __kernel void multiMatrix(__global double *in, __global double *out, __global do
         in[j]=1.0 / (1.0 + exp(-result));
     }
 }
-
-__kernel void multiMatrix2(__global double *in, __global double *out, __global double *w, const int n1, const int n2)
-{
-    int j = get_global_id(0); //129
-    if (j!=0){
-        double result=0;
-        for (int i = 1; i <= n1; i++) 
-        {
-            result += *(out+i) * *(w + i *n2 + j);
-            // if (j==53){
-            //     printf("[%f %f]",*(out+i),*(w + j * limit + i));
-            // }
-        }
-        in[j]=result;
-    }
-}
-

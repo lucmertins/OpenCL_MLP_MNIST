@@ -49,7 +49,7 @@ cl_kernel kernelClearVector = 0;
 cl_kernel kernelSumVector = 0;
 cl_kernel kernelSigmoid = 0;
 cl_kernel kernelMultiMatrix = 0;
-cl_kernel kernelMultiMatrix2 = 0;
+
 
 cl_device_id *deviceGlobal;
 
@@ -246,11 +246,11 @@ void backPropagation()
 int learning()
 {
     int numErr;
-    if (pDelta1 == 0)
+    if (pDelta1 != 0)
     {
         free(pDelta1);
     }
-    if (pDelta2 == 0)
+    if (pDelta2 != 0)
     {
         free(pDelta2);
     }
@@ -422,8 +422,6 @@ void initKernels()
     avalError(kernelSigmoid, 402, CL_SUCCESS);
     kernelMultiMatrix = clCreateKernel(program, "multiMatrix", NULL);
     avalError(kernelMultiMatrix, 403, CL_SUCCESS);
-    kernelMultiMatrix2 = clCreateKernel(program, "multiMatrix2", NULL);
-    avalError(kernelMultiMatrix2, 404, CL_SUCCESS);
 }
 
 void cleanOpenCL()
@@ -457,6 +455,4 @@ void cleanKernels()
         clReleaseKernel(kernelSigmoid);
     if (kernelMultiMatrix != 0)
         clReleaseKernel(kernelMultiMatrix);
-    if (kernelMultiMatrix2 != 0)
-        clReleaseKernel(kernelMultiMatrix2);
 }
