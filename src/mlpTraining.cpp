@@ -32,10 +32,10 @@ const double epsilon = 1e-3;
 double *pW1 = 0, *pDelta1 = 0, *pOut1 = 0;
 
 // hidden layer
-double *pW2 = 0, *pDelta2 = 0, *pIn2 = 0, *pOut2 = 0;
+double *pW2 = 0, *pDelta2 = 0, *pOut2 = 0;
 
 // Output layer
-double *pIn3 = 0, *pOut3 = 0;
+double  *pOut3 = 0;
 
 double *pExpected = 0;
 
@@ -106,11 +106,9 @@ void initLayersRoundWeight()
             }
         }
     }
-    pIn2 = (double *)malloc((n2 + 1) * sizeof(double));
     pOut2 = (double *)malloc((n2 + 1) * sizeof(double));
 
     // Layer 3 - Output layer
-    pIn3 = (double *)malloc((n3 + 1) * sizeof(double));
     pOut3 = (double *)malloc((n3 + 1) * sizeof(double));
 }
 void processPerceptron()
@@ -291,7 +289,7 @@ int learning()
 void input()
 {
     char number;
-    if (pOut1 == 0)
+    if (pOut1 != 0)
     {
         free(pOut1);
     }
@@ -444,9 +442,7 @@ void cleanBuffers()
     free(pOut1);
     free(pW2);
     free(pDelta2);
-    free(pIn2);
     free(pOut2);
-    free(pIn3);
     free(pOut3);
     free(pExpected);
 }
